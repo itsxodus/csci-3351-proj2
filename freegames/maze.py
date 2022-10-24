@@ -65,6 +65,7 @@ def main_menu():
 def play():  # Play Screen
     pygame.display.set_caption('Play')
     while True:
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -79,6 +80,7 @@ def play():  # Play Screen
                     print("2")
                 if event.key == pygame.K_3:
                     print("3")
+        print(color)
 
 
 def draw():
@@ -90,6 +92,10 @@ def draw():
         for y in range(-200, 200, 40):
             if random() > 0.5:
                 line(x, y, x + 40, y + 40)
+            elif random() > 0.75:
+                color('red')
+                line(x, y + 40, x + 40, y)
+                color('black')
             else:
                 line(x, y + 40, x + 40, y)
 
@@ -110,7 +116,7 @@ def tap(x, y):
     dot(4)
 
 
-main_menu()
+#main_menu()
 setup(420, 420, 370, 0)
 hideturtle()
 tracer(2)   # set 2 to False in order to hide tracer completely

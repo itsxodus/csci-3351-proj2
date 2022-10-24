@@ -1,4 +1,3 @@
-
 from random import random
 from turtle import *
 
@@ -39,7 +38,7 @@ def main_menu():
     pygame.display.set_caption('Main Menu')
     button(SCREEN, (SCREEN_WIDTH / 800, SCREEN_HEIGHT / 600), "Play", (200, 100), (255, 255, 255), "Arial")
     button(SCREEN, (SCREEN_WIDTH / 800, SCREEN_HEIGHT / 600), "Quit", (200, 100), (255, 255, 255), "Arial")
-    SCREEN.blit(BG, (0, 0))
+    #SCREEN.blit(BG, (0, 0))
 
     pygame.display.update()
 
@@ -99,6 +98,7 @@ def draw():
 
 def tap(x, y):
     """Draw line and dot for screen tap."""
+    print(x, y)
     if abs(x) > 198 or abs(y) > 198:
         up()
     else:
@@ -113,7 +113,7 @@ def tap(x, y):
 main_menu()
 setup(420, 420, 370, 0)
 hideturtle()
-tracer(False)
+tracer(2)   # set 2 to False in order to hide tracer completely
 draw()
 onscreenclick(tap)
 done()

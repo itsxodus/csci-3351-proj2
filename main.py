@@ -15,10 +15,6 @@ playerX_change = 0
 playerY_change = 0
 playerMoveSpeed = 3
 playerSideToCheck = "D"
-playerTopAtWall = False
-playerBottomAtWall = False
-playerLeftAtWall = False
-playerRightAtWall = False
 
 font = pygame.font.SysFont("Arial", 20)
 
@@ -88,7 +84,7 @@ while running:
             if event.key == pygame.K_ESCAPE:
                 running = False
             if event.key == pygame.K_SPACE:
-                paused = True if paused == False else False
+                paused = True if not paused else False
                 print("paused?: ", paused)
             if event.key == pygame.K_LEFT:
                 playerX_change = 0
@@ -141,15 +137,11 @@ while running:
     if wallAtPlayerSide(playerSideToCheck):
         if playerSideToCheck == "L":
             playerX_change = 0
-            playerLeftAtWall = True
         elif playerSideToCheck == "R":
             playerX_change = 0
-            playerRightAtWall = True
         elif playerSideToCheck == "U":
             playerY_change = 0
-            playerTopAtWall = True
         elif playerSideToCheck == "D":
             playerY_change = 0
-            playerBottomAtWall = True
 
     clock.tick(60)  # game runs at 60 FPS

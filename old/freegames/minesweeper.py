@@ -10,7 +10,7 @@ Exercises
 from random import randrange, seed
 from turtle import *
 
-from freegames import floor, square
+from old.freegames import floor, square
 
 seed(0)
 bombs = {}

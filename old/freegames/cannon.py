@@ -11,7 +11,7 @@ Exercises
 from random import randrange
 from turtle import *
 
-from freegames import vector
+from old.freegames import vector
 
 ball = vector(-200, -200)
 speed = vector(0, 0)

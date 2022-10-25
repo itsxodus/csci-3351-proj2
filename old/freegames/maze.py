@@ -1,10 +1,9 @@
 from random import random
 from turtle import *
 
-from freegames import line
+from old.freegames import line
 
 import pygame
-import sys
 
 pygame.init()
 SCREEN = pygame.display.set_mode((800, 600))
@@ -92,8 +91,8 @@ def draw():
         for y in range(-200, 200, 40):
             if random() > 0.5:
                 line(x, y, x + 40, y + 40)
-            elif random() > 0.75:
-                color('red')
+            elif random() > 0.65:
+                color('white')
                 line(x, y + 40, x + 40, y)
                 color('black')
             else:

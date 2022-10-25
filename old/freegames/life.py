@@ -14,7 +14,7 @@ Exercises
 from random import choice
 from turtle import *
 
-from freegames import square
+from old.freegames import square
 
 cells = {}
 

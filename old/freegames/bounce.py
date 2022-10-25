@@ -12,7 +12,7 @@ Exercises
 from random import *
 from turtle import *
 
-from freegames import vector
+from old.freegames import vector
 
 
 def value():

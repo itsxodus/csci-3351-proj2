@@ -11,7 +11,7 @@ Exercises
 
 from turtle import *
 
-from freegames import line
+from old.freegames import line
 
 turns = {'red': 'yellow', 'yellow': 'red'}
 state = {'player': 'yellow', 'rows': [0] * 8}

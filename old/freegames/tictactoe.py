@@ -10,7 +10,7 @@ Exercises
 
 from turtle import *
 
-from freegames import line
+from old.freegames import line
 
 
 def grid():

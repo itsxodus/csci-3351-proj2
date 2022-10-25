@@ -1,6 +1,6 @@
 from pytest import raises
 
-import freegames.utils as utils
+import old.freegames.utils as utils
 
 
 def test_change_after_hash():

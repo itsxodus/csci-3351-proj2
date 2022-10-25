@@ -10,7 +10,7 @@ Exercises
 
 from turtle import *
 
-from freegames import square, vector
+from old.freegames import square, vector
 
 p1xy = vector(-100, 0)
 p1aim = vector(4, 0)

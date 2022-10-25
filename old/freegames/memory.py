@@ -12,7 +12,7 @@ Exercises:
 from random import *
 from turtle import *
 
-from freegames import path
+from old.freegames import path
 
 car = path('car.gif')
 tiles = list(range(32)) * 2

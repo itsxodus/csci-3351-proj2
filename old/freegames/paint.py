@@ -11,7 +11,7 @@ Exercises
 
 from turtle import *
 
-from freegames import vector
+from old.freegames import vector
 
 
 def line(start, end):

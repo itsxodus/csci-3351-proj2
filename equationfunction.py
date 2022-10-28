@@ -58,5 +58,7 @@ def quizFromEqnList(eqnlist):
 
     print("\nTotal Score: {}/{} ({}%)".format(amntCorrect, len(eqnlist), int(100 * (amntCorrect / len(eqnlist)))))
 
-#print(generateEquationList(3, 4))   # <----- The list of question/answer tuples, for connecting with GUI
-quizFromEqnList(generateEquationList(3, 4))    # <----- Text only output test
+print(generateEquation(10))
+#print(generateEquationList(1, 4))   # <----- The list of question/answer tuples, for connecting with GUI
+#quizFromEqnList(generateEquationList(3, 4))    # <----- Text only output test
+

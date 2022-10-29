@@ -150,7 +150,7 @@ while running:
         playerY = screenH - playerImg.get_height()
 
     if playerY >= 548:
-        print("Done!")
+        print("Done! {:.2f} seconds elapsed".format(pygame.time.get_ticks()/1000))
         playerX = initialPlayerX
         playerY = initialPlayerY
 

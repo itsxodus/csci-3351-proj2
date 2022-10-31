@@ -82,7 +82,8 @@ def wallAtPlayerSide(side):
         if color == (0, 0, 0, 255) or color2 == (0, 0, 0, 255) or color3 == (0, 0, 0, 255) or color4 == (0, 0, 0, 255):
             return True
         if color == (255, 255, 0, 255) or color2 == (255, 255, 0, 255) or color3 == (255, 255, 0, 255) or color4 == (255, 255, 0, 255):
-            print("{}".format(quizFromEqnList(generateEquationList(3, 4))))
+            print("questionImg Touched")
+            #print("{}".format(quizFromEqnList(generateEquationList(3, 4))))
             questionImg.fill((0, 0, 0, 0))
         elif color == (255, 255, 255, 255) and color2 == (255, 255, 255, 255) and color3 == (255, 255, 255, 255) and color4 == (255, 255, 255, 255):
             return False

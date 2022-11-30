@@ -1,16 +1,39 @@
+import tkinter.messagebox
+
 import pygame
 import random
-from equationfunction import quizFromEqnList, generateEquationList
+import tkinter as tk
+from question import Question
+from tkinter import messagebox
+from equationfunction import generateEquation
 
 pygame.init()
 
-DEBUGMODE = True
+DEBUGMODE = False
+
+# TODO: Implement main menu, fix pause menu, and add save/load feature
+#ATMAINMENU = False
+
+# Amount of time, in seconds the timer counts down to (can be changed)
+MAXTIME = 3
+
+# Default difficulty of questions, can be changed in game loop
+CURRENTDIFFICULTY = 3
+CURRENTQUESTION = 0
+MAZESPASSED = 0
+QUESTIONSSEEN = 0
+QUESTIONSCORRECT = 0
+REMAININGTIME = 0
+
+# Initializes the total score of the player
+PLAYERSCORE = 0
 
 # Sets the bounds of the GUI
 screenW = 800
 screenH = 600
 screen = pygame.display.set_mode((screenW, screenH))
 pygame.display.set_caption('Mars Mathematical Materials')
+
 # Assigns information to user sprite
 playerImg = pygame.image.load('sprites\player.png')
 initialPlayerX = 375
@@ -21,8 +44,12 @@ playerX_change = 0
 playerY_change = 0
 playerMoveSpeed = 3
 playerSideToCheck = "D"
-# Assigns information to question sprite
-questionImg = pygame.image.load('sprites\question.png')
+
+# List of maze image files
+mazelist = ["mazes/maze1.png", "mazes/maze2.png", "mazes/maze3.png", "mazes/maze4.png", "mazes/maze5.png"]
+
+# Sets initial maze, can be changed in the game loop
+currentmaze = mazelist[random.randint(0, len(mazelist) - 1)]
 
 
 def text(contents, x, y, font="Arial", size=20):
@@ -31,11 +58,22 @@ def text(contents, x, y, font="Arial", size=20):
     screen.blit(textcontent, (x, y))
 
 
-def maze(filepath, x, y, widthScale, heightScale):
+def maze(filepath, x=150, y=75, widthScale=1.5, heightScale=1.5):
     # Takes the maze image, converts it to desired width and height, places it at an assigned X and Y coordinate
     imp = pygame.image.load(filepath).convert()
     imp = pygame.transform.scale(imp, (imp.get_width() * widthScale, imp.get_height() * heightScale))
     screen.blit(imp, (x, y))
+
+
+def setmaze():
+    maze(currentmaze, 150, 75, 1.5, 1.5)
+
+
+def changemaze():
+    global currentmaze, questionsloaded
+    questionlist.clear()
+    currentmaze = mazelist[random.randint(0, len(mazelist) - 1)]
+    questionsloaded = False
 
 
 def player(x, y):
@@ -43,9 +81,48 @@ def player(x, y):
     screen.blit(playerImg, (x, y))
 
 
-def question(contents, x, y):
+def questionicon(question):
     # Assigns the math equation to a sprite placed at an assigned X and Y coordinate
-    screen.blit(questionImg, (x, y))
+    screen.blit(question.icon, (question.x, question.y))
+
+
+def showquestion(question):
+
+    global CURRENTQUESTION, QUESTIONSSEEN
+
+    createQuestionWindow(question)
+    CURRENTQUESTION += 1
+    QUESTIONSSEEN += 1
+
+
+def createQuestionWindow(question):
+    root = tk.Tk()
+    root.resizable(0, 0)
+    root.geometry('350x250')
+    root.title("Quickly, time is still passing!".format(question.question))
+
+    label = tk.Label(root, text="{} =".format(question.question), font=("Arial", 20)).pack()
+    inputbox = tk.Text(root, height=2, width=20)
+    inputbox.pack()
+
+    def submitAnswer():
+        global MAXTIME, QUESTIONSCORRECT, PLAYERSCORE
+
+        useranswer = inputbox.get(1.0, "end-1c")
+        if useranswer == str(question.answer):
+            root.destroy()
+            tkinter.messagebox.showinfo(message="{} is Correct!".format(useranswer))
+            MAXTIME += CURRENTDIFFICULTY * 2
+            QUESTIONSCORRECT += 1
+            PLAYERSCORE += question.difficulty
+        else:
+            root.destroy()
+            tkinter.messagebox.showinfo(message="Incorrect, {} is correct.".format(question.answer))
+            MAXTIME -= CURRENTDIFFICULTY * 2
+
+    button = tk.Button(root, text="Submit", command= lambda: submitAnswer()).pack()
+
+    root.mainloop()
 
 
 def wallAtPlayerSide(side):
@@ -54,7 +131,7 @@ def wallAtPlayerSide(side):
         Based off which way, records the pixels touching the side of the sprite
         Compares these recorded pixels to the defined colors if statement.
         If the color is black, it says there's a collision and to stop the user from moving that direction
-        If the color is yellow, it identifies it as a question, prints questionImg Touched and removes the question sprite
+        If the color is red, it identifies it as a question, prints questionImg Touched and removes the question sprite
         if the color is white, collision is false, the player sprite can progress
     """
     try:
@@ -81,10 +158,11 @@ def wallAtPlayerSide(side):
 
         if color == (0, 0, 0, 255) or color2 == (0, 0, 0, 255) or color3 == (0, 0, 0, 255) or color4 == (0, 0, 0, 255):
             return True
-        if color == (255, 255, 0, 255) or color2 == (255, 255, 0, 255) or color3 == (255, 255, 0, 255) or color4 == (255, 255, 0, 255):
-            print("questionImg Touched")
-            #print("{}".format(quizFromEqnList(generateEquationList(3, 4))))
-            questionImg.fill((0, 0, 0, 0))
+        if color == (255, 0, 0, 255) or color2 == (255, 0, 0, 255) or color3 == (255, 0, 0, 255) or color4 == (255, 0, 0, 255):
+            for qToTest in questionlist:
+                if abs(playerY - qToTest.y) < 10 and abs(playerX - qToTest.x) < 10:
+                    showquestion(qToTest)  # show specific question the user is touching
+                    qToTest.hidequestion()
         elif color == (255, 255, 255, 255) and color2 == (255, 255, 255, 255) and color3 == (255, 255, 255, 255) and color4 == (255, 255, 255, 255):
             return False
         else:
@@ -93,17 +171,100 @@ def wallAtPlayerSide(side):
         return False
 
 
+questionsloaded = False
+questionlist = []
 paused = False
 running = True
 clock = pygame.time.Clock()
+
+
 while running:
     # Main gameplay loop
 
+    # TODO: Have a save system in place to auto save a user's progress at the completion of each maze, and they can load the main menu
+    # TODO: and have a main menu with new game, a load button, and a quit button
+
+    """while ATMAINMENU:
+
+        screen.fill((52, 78, 91))
+        screen.set_alpha(12)
+
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    paused = not paused
+            if event.type == pygame.QUIT:
+                running = False
+
+        pygame.display.flip()
+
+        ms = clock.tick_busy_loop(60)"""
+
+    while running and REMAININGTIME > 0 and paused:
+
+        screen.fill((52, 78, 91, 127))
+
+        text("Game is currently paused, press space to unpause.", 0, 0, font="Arial", size=30)
+
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    paused = not paused
+            if event.type == pygame.QUIT:
+                running = False
+
+        pygame.display.flip()
+
+        ms = clock.tick_busy_loop(60)
+
+        if paused:
+            MAXTIME += (ms / 1000)
+
+    while running and REMAININGTIME <= 0 and paused:
+
+        screen.fill((52, 78, 91, 127))
+
+        text("GAME OVER, press space to try again.", 0, 0, font="Arial", size=30)
+
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    clock = pygame.time.Clock()
+                    MAXTIME += 10
+                    PLAYERSCORE = 0
+                    MAZESPASSED = 0
+                    QUESTIONSCORRECT = 0
+                    QUESTIONSSEEN = 0
+                    playerX = initialPlayerX
+                    playerY = initialPlayerY
+                    changemaze()
+                    paused = False
+            if event.type == pygame.QUIT:
+                running = False
+
+        pygame.display.flip()
+
+        ms = clock.tick_busy_loop(60)
+
+        if paused:
+            MAXTIME += (ms / 1000)
+
+
     screen.fill((255, 155, 155))
 
-    maze("mazes/maze1.png", 150, 75, 1.5, 1.5)
+    setmaze()
 
-    question("Test contents", 210, 200)
+    if not questionsloaded:
+        for number in range(CURRENTDIFFICULTY):
+            # Makes new OO questions in valid locations
+            x = random.randrange(155, 615, 24)
+            y = random.randrange(105, 524, 24)
+            q = Question(x, y, CURRENTDIFFICULTY)
+            questionlist.append(q)
+        questionsloaded = True
+
+    for question in questionlist:
+        questionicon(question)
 
     for event in pygame.event.get():  # Records a keypress
         if event.type == pygame.QUIT:  # Exits the game
@@ -111,13 +272,16 @@ while running:
         if event.type == pygame.KEYDOWN:  # Activates debug mode
             if event.key == pygame.K_d:
                 DEBUGMODE = not DEBUGMODE
+            if event.key == pygame.K_m:
+                changemaze()
+                PLAYERSCORE = 0
             if event.key == pygame.K_ESCAPE:  # Exits the game
                 running = False
             if event.key == pygame.K_F11:  # Toggles fullscreen for the game
                 pygame.display.toggle_fullscreen()
             if event.key == pygame.K_SPACE:  # Pauses and unpauses the instance
                 paused = not paused
-                print("paused?: ", paused)
+                #print("paused?: ", paused)
                 if paused:  # Locks user sprite movement
                     playerX_change = 0
                     playerY_change = 0
@@ -165,19 +329,50 @@ while running:
     if playerY >= screenH - playerImg.get_height():
         playerY = screenH - playerImg.get_height()
 
-    # Occurs when user sprite passes the finish line, places user sprite back at start
+    ELAPSEDTIME = pygame.time.get_ticks()/1000
+
+    # Occurs when user sprite passes the finish line, places user sprite back at start, changes maze
     if playerY >= 548:
-        print("Done! {:.2f} seconds elapsed".format(pygame.time.get_ticks()/1000))
+        #print("Done! {:.2f} seconds elapsed".format(ELAPSEDTIME))
         playerX = initialPlayerX
         playerY = initialPlayerY
+        MAZESPASSED += 1
+        MAXTIME += 20
+        PLAYERSCORE += 100 * CURRENTDIFFICULTY * (QUESTIONSCORRECT / QUESTIONSSEEN)
+        CURRENTDIFFICULTY += 2
+        changemaze()
 
+    # Update player position visually
     player(playerX, playerY)
+
+    # Recalculates remaining time
+    if not paused:
+        REMAININGTIME = MAXTIME - (pygame.time.get_ticks() / 1000)
+
+    if REMAININGTIME <= 0:
+        paused = True
+
+    # Update timer text
+    text("Time Remaining: {:.2f}".format(abs(REMAININGTIME)), 20, 40)
+
+    # Update player score
+    text("Score: {}".format(PLAYERSCORE), 650, 40)
+
+    # Update Maze Number
+    text("MAZE #{}".format(MAZESPASSED + 1), 350, 40)
+
+    # Update total question count
+    if QUESTIONSSEEN == 0:
+        text("Overall Accuracy: 0%", 5, 575)
+    else:
+        text("Overall Accuracy: {:.0f}%".format(100 * (QUESTIONSCORRECT / QUESTIONSSEEN)), 5, 575)
 
     if DEBUGMODE:   # Displays the debug menu when TRUE
         text("Press D to hide: x: {}, y: {}, x mov: {}, y mov: {}, side moving: {}, wall at side?: {}".format(playerX, playerY, playerX_change, playerY_change, playerSideToCheck, wallAtPlayerSide(playerSideToCheck)), 20, 10)
     if paused:      # Displays the pause menu when TRUE
         text("-PAUSED-", 50, 500, "Impact", 24)
 
+    # Updates the entire display each frame
     pygame.display.flip()
 
     if wallAtPlayerSide(playerSideToCheck):     # Stops user sprite movement when recording collision data
@@ -190,4 +385,8 @@ while running:
         elif playerSideToCheck == "D":
             playerY_change = 0
 
-    clock.tick(60)  # game runs at 60 FPS, waits 1/60th of a second to restart the game's main loop
+    ms = clock.tick_busy_loop(60)  # game runs at 60 FPS, waits 1/60th of a second to restart the game's main loop
+
+    # Used for ensuring the remaining time on the clock doesn't decrease while the game is paused
+    if paused:
+        MAXTIME += (ms/1000)

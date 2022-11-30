@@ -1,3 +1,4 @@
+import math
 import tkinter.messagebox
 
 import pygame
@@ -15,10 +16,14 @@ DEBUGMODE = False
 #ATMAINMENU = False
 
 # Amount of time, in seconds the timer counts down to (can be changed)
-MAXTIME = 3
+MAXTIME = 10
+
+
+DEFAULTMAXTIME = 100
+DEFAULTDIFFICULTY = 1
 
 # Default difficulty of questions, can be changed in game loop
-CURRENTDIFFICULTY = 3
+CURRENTDIFFICULTY = DEFAULTDIFFICULTY
 CURRENTQUESTION = 0
 MAZESPASSED = 0
 QUESTIONSSEEN = 0
@@ -111,12 +116,14 @@ def createQuestionWindow(question):
         useranswer = inputbox.get(1.0, "end-1c")
         if useranswer == str(question.answer):
             root.destroy()
+            question.hidequestion()
             tkinter.messagebox.showinfo(message="{} is Correct!".format(useranswer))
             MAXTIME += CURRENTDIFFICULTY * 2
             QUESTIONSCORRECT += 1
             PLAYERSCORE += question.difficulty
         else:
             root.destroy()
+            question.hidequestion()
             tkinter.messagebox.showinfo(message="Incorrect, {} is correct.".format(question.answer))
             MAXTIME -= CURRENTDIFFICULTY * 2
 
@@ -162,7 +169,7 @@ def wallAtPlayerSide(side):
             for qToTest in questionlist:
                 if abs(playerY - qToTest.y) < 10 and abs(playerX - qToTest.x) < 10:
                     showquestion(qToTest)  # show specific question the user is touching
-                    qToTest.hidequestion()
+                    #qToTest.hidequestion()
         elif color == (255, 255, 255, 255) and color2 == (255, 255, 255, 255) and color3 == (255, 255, 255, 255) and color4 == (255, 255, 255, 255):
             return False
         else:
@@ -181,14 +188,15 @@ clock = pygame.time.Clock()
 while running:
     # Main gameplay loop
 
-    # TODO: Have a save system in place to auto save a user's progress at the completion of each maze, and they can load the main menu
-    # TODO: and have a main menu with new game, a load button, and a quit button
+    # TODO: Have a save system in place to auto save a user's progress at the completion of each maze, and they can load progress in the main menu
+    # TODO: and have a main menu with new game, a load button, a help button, and a quit button
 
-    """while ATMAINMENU:
+    """
+    # MAIN MENU Screen
+    while ATMAINMENU:
 
         screen.fill((52, 78, 91))
-        screen.set_alpha(12)
-
+        
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
@@ -200,11 +208,14 @@ while running:
 
         ms = clock.tick_busy_loop(60)"""
 
+    # PAUSE Screen
     while running and REMAININGTIME > 0 and paused:
 
         screen.fill((52, 78, 91, 127))
 
-        text("Game is currently paused, press space to unpause.", 0, 0, font="Arial", size=30)
+        text("Game is currently paused, press space to unpause.", 50, 10, font="Arial", size=30)
+
+        text("(Perhaps add a Resume, Load Save, Main Menu, and Quit Button here)", 50, 250, font="Arial", size=22)
 
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
@@ -220,21 +231,27 @@ while running:
         if paused:
             MAXTIME += (ms / 1000)
 
+    # GAME OVER Screen
     while running and REMAININGTIME <= 0 and paused:
 
         screen.fill((52, 78, 91, 127))
 
-        text("GAME OVER, press space to try again.", 0, 0, font="Arial", size=30)
+        text("GAME OVER, press space to try again.", 125, 10, font="Arial", size=30)
+        text("Final score: {}, Mazes Cleared: {}, Question Accuracy: {}% ({}/{})".format(
+            PLAYERSCORE, MAZESPASSED, ((100 * (QUESTIONSCORRECT / QUESTIONSSEEN)) if QUESTIONSSEEN > 0 else 0), QUESTIONSCORRECT, QUESTIONSSEEN), 75, 50, font="Arial", size=24)
+
+        text("(Perhaps add a Save (High) Score, Main Menu, and Quit Button here)", 75, 250, font="Arial", size=22)
 
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     clock = pygame.time.Clock()
-                    MAXTIME += 10
+                    MAXTIME += DEFAULTMAXTIME
                     PLAYERSCORE = 0
                     MAZESPASSED = 0
                     QUESTIONSCORRECT = 0
                     QUESTIONSSEEN = 0
+                    CURRENTDIFFICULTY = DEFAULTDIFFICULTY
                     playerX = initialPlayerX
                     playerY = initialPlayerY
                     changemaze()
@@ -249,13 +266,14 @@ while running:
         if paused:
             MAXTIME += (ms / 1000)
 
+    # This point and below in the game loop is the actual gameplay screen
 
     screen.fill((255, 155, 155))
 
     setmaze()
 
     if not questionsloaded:
-        for number in range(CURRENTDIFFICULTY):
+        for number in range(round(2 * math.log(7/8 * CURRENTDIFFICULTY) + 1)):  # Amount of questions = difficulty?, changed it to make it less linear to range(round(2 * math.log(7/8 * CURRENTDIFFICULTY) + 1))
             # Makes new OO questions in valid locations
             x = random.randrange(155, 615, 24)
             y = random.randrange(105, 524, 24)
@@ -272,9 +290,16 @@ while running:
         if event.type == pygame.KEYDOWN:  # Activates debug mode
             if event.key == pygame.K_d:
                 DEBUGMODE = not DEBUGMODE
-            if event.key == pygame.K_m:
+            if event.key == pygame.K_m and DEBUGMODE:     # DEBUG BEHAVIOR: Change maze
                 changemaze()
                 PLAYERSCORE = 0
+                MAZESPASSED += 1
+                MAXTIME += 20
+                if QUESTIONSSEEN > 0:
+                    PLAYERSCORE += 100 * CURRENTDIFFICULTY * (QUESTIONSCORRECT / QUESTIONSSEEN)
+                else:
+                    PLAYERSCORE += 100
+                CURRENTDIFFICULTY += 2
             if event.key == pygame.K_ESCAPE:  # Exits the game
                 running = False
             if event.key == pygame.K_F11:  # Toggles fullscreen for the game

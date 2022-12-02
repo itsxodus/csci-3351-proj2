@@ -4,26 +4,27 @@ import tkinter.messagebox
 import pygame
 import random
 import tkinter as tk
+import button
 from question import Question
 from tkinter import messagebox
 from equationfunction import generateEquation
 
 pygame.init()
 
+# Debug Mode Default (False), enable by pressing 'd' in-game
 DEBUGMODE = False
 
-# TODO: Implement main menu, fix pause menu, and add save/load feature
-#ATMAINMENU = False
+# Default start time and default question difficulty
+DEFAULTMAXTIME = 150
+DEFAULTDIFFICULTY = 2
 
 # Amount of time, in seconds the timer counts down to (can be changed)
-MAXTIME = 10
+MAXTIME = DEFAULTMAXTIME
 
-
-DEFAULTMAXTIME = 100
-DEFAULTDIFFICULTY = 1
-
-# Default difficulty of questions, can be changed in game loop
+# Default difficulty and amounts of questions, changes in game loop
 CURRENTDIFFICULTY = DEFAULTDIFFICULTY
+QUESTIONSINCURRENTMAZE = 0
+QUESTIONSSEENINCURRENTMAZE = 0
 CURRENTQUESTION = 0
 MAZESPASSED = 0
 QUESTIONSSEEN = 0
@@ -50,8 +51,8 @@ playerY_change = 0
 playerMoveSpeed = 3
 playerSideToCheck = "D"
 
-# List of maze image files
-mazelist = ["mazes/maze1.png", "mazes/maze2.png", "mazes/maze3.png", "mazes/maze4.png", "mazes/maze5.png"]
+# Creating list of maze image files
+mazelist = ["mazes/maze{}.png".format(i+1) for i in range(20)]
 
 # Sets initial maze, can be changed in the game loop
 currentmaze = mazelist[random.randint(0, len(mazelist) - 1)]
@@ -71,14 +72,17 @@ def maze(filepath, x=150, y=75, widthScale=1.5, heightScale=1.5):
 
 
 def setmaze():
+    global QUESTIONSSEENINCURRENTMAZE
+    QUESTIONSSEENINCURRENTMAZE = 0
     maze(currentmaze, 150, 75, 1.5, 1.5)
 
 
 def changemaze():
-    global currentmaze, questionsloaded
+    global currentmaze, questionsloaded, QUESTIONSSEENINCURRENTMAZE
     questionlist.clear()
     currentmaze = mazelist[random.randint(0, len(mazelist) - 1)]
     questionsloaded = False
+    QUESTIONSSEENINCURRENTMAZE = 0
 
 
 def player(x, y):
@@ -91,20 +95,50 @@ def questionicon(question):
     screen.blit(question.icon, (question.x, question.y))
 
 
+def showHelpGUI():
+    root = tk.Tk()
+    root.resizable(0, 0)
+    root.geometry('350x350')
+    root.title("Help Menu")
+
+    # TODO: Flesh out Help Menu
+    label = tk.Label(root, text="Welcome to Mars Mathematical Materials!", font=("Arial", 14)).pack()
+    label2 = tk.Label(root, text="Your player (green square) must move\n"
+                                 "through the mazes quickly while touching,\n"
+                                 "and attempting all questions (red squares).\n"
+                                 "\n"
+                                 "Only then will you be able to solve the maze\n"
+                                 "itself, and move on to the next maze.\n"
+                                 "\n"
+                                 "Use arrow keys to move, and space to pause.\n"
+                                 "\n"
+                                 "Extra time is gained for answering correctly,\n"
+                                 "and time is removed for wrong answers.\n"
+                                 "The questions get more difficult as the mazes\n"
+                                 "go on, and so do the amount of questions\n"
+                                 "present. The game autosaves after each maze.\n"
+                                 "\n"
+                                 "Put on your thinking cap\n"
+                                 "and flex your math and maze-solving muscles!", font=("Arial", 12)).pack()
+
+    root.mainloop()
+
+
 def showquestion(question):
 
-    global CURRENTQUESTION, QUESTIONSSEEN
+    global CURRENTQUESTION, QUESTIONSSEEN, QUESTIONSSEENINCURRENTMAZE
 
     createQuestionWindow(question)
     CURRENTQUESTION += 1
     QUESTIONSSEEN += 1
+    QUESTIONSSEENINCURRENTMAZE += 1
 
 
 def createQuestionWindow(question):
     root = tk.Tk()
     root.resizable(0, 0)
-    root.geometry('350x250')
-    root.title("Quickly, time is still passing!".format(question.question))
+    root.geometry('350x150')
+    root.title("Quick, time is passing!".format(question.question))
 
     label = tk.Label(root, text="{} =".format(question.question), font=("Arial", 20)).pack()
     inputbox = tk.Text(root, height=2, width=20)
@@ -167,9 +201,9 @@ def wallAtPlayerSide(side):
             return True
         if color == (255, 0, 0, 255) or color2 == (255, 0, 0, 255) or color3 == (255, 0, 0, 255) or color4 == (255, 0, 0, 255):
             for qToTest in questionlist:
-                if abs(playerY - qToTest.y) < 10 and abs(playerX - qToTest.x) < 10:
+                if abs(playerY - qToTest.y) < 10 and abs(playerX - qToTest.x) < 10:  # if user is close to a question
                     showquestion(qToTest)  # show specific question the user is touching
-                    #qToTest.hidequestion()
+                    # qToTest.hidequestion()
         elif color == (255, 255, 255, 255) and color2 == (255, 255, 255, 255) and color3 == (255, 255, 255, 255) and color4 == (255, 255, 255, 255):
             return False
         else:
@@ -182,99 +216,247 @@ questionsloaded = False
 questionlist = []
 paused = False
 running = True
+global clock
 clock = pygame.time.Clock()
 
+# TODO: Have a save system in place to auto save a user's progress at the completion of each maze, and they can load the progress in the main menu
+
+# Default behavior is to start the game at the Main Menu
+ATMAINMENU = True
 
 while running:
-    # Main gameplay loop
+    # Main game loop
 
-    # TODO: Have a save system in place to auto save a user's progress at the completion of each maze, and they can load progress in the main menu
-    # TODO: and have a main menu with new game, a load button, a help button, and a quit button
-
-    """
     # MAIN MENU Screen
     while ATMAINMENU:
 
-        screen.fill((52, 78, 91))
-        
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    paused = not paused
-            if event.type == pygame.QUIT:
-                running = False
+        menu_state = "main"
 
-        pygame.display.flip()
+        newgame_img = pygame.image.load("sprites/button_newgame.png").convert_alpha()
+        load_img = pygame.image.load("sprites/button_load.png").convert_alpha()
+        help_img = pygame.image.load("sprites/button_help.png").convert_alpha()
+        quit_img = pygame.image.load("sprites/button_quit.png").convert_alpha()
 
-        ms = clock.tick_busy_loop(60)"""
+        newgame_button = button.Button(20, 120, newgame_img, 1)
+        load_button = button.Button(20, 220, load_img, 1)
+        help_button = button.Button(20, 320, help_img, 1)
+        quit_button = button.Button(20, 420, quit_img, 1)
+
+        run = True
+        while run:
+            screen.fill((190, 90, 90))
+
+            text("Placeholder Mars Mathematical Materials Main Menu Screen", 125, 10)
+
+            text("<- TBA", 170, 250)
+
+            # check menu state
+            if ATMAINMENU:
+                if menu_state == "main":
+                    # draw pause screen buttons
+                    if newgame_button.draw(screen):
+                        MAXTIME = DEFAULTMAXTIME + pygame.time.get_ticks()/1000
+                        PLAYERSCORE = 0
+                        MAZESPASSED = 0
+                        QUESTIONSCORRECT = 0
+                        QUESTIONSSEEN = 0
+                        CURRENTDIFFICULTY = DEFAULTDIFFICULTY
+                        playerX = initialPlayerX
+                        playerY = initialPlayerY
+                        ATMAINMENU = False
+                        run = False
+                        changemaze()
+                        setmaze()
+                        questionsloaded = False
+                        paused = False
+                    if load_button.draw(screen):
+                        print("load save button on main menu pressed")
+                    if help_button.draw(screen):
+                        showHelpGUI()
+                    if quit_button.draw(screen):
+                        pygame.quit()
+            else:
+                menu_state = "not"
+
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        pass
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    running = False
+                    run = False
+
+            pygame.display.flip()
+
+            ms = clock.tick_busy_loop(60)
+            MAXTIME += (ms / 1000)
 
     # PAUSE Screen
     while running and REMAININGTIME > 0 and paused:
 
-        screen.fill((52, 78, 91, 127))
+        menu_state = "main"
 
-        text("Game is currently paused, press space to unpause.", 50, 10, font="Arial", size=30)
+        resume_img = pygame.image.load("sprites/button_resume.png").convert_alpha()
+        load_img = pygame.image.load("sprites/button_load.png").convert_alpha()
+        mainmenu_img = pygame.image.load("sprites/button_mainmenu.png").convert_alpha()
+        help_img = pygame.image.load("sprites/button_help.png").convert_alpha()
+        quit_img = pygame.image.load("sprites/button_quit.png").convert_alpha()
 
-        text("(Perhaps add a Resume, Load Save, Main Menu, and Quit Button here)", 50, 250, font="Arial", size=22)
+        # create button instances
+        resume_button = button.Button(304, 75, resume_img, 1)
+        load_button = button.Button(336, 175, load_img, 1)
+        mainmenu_button = button.Button(336, 275, mainmenu_img, 1)
+        help_button = button.Button(336, 375, help_img, 1)
+        quit_button = button.Button(336, 475, quit_img, 1)
 
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    paused = not paused
-            if event.type == pygame.QUIT:
-                running = False
+        # game loop for pause screen
+        run = True
+        while run:
 
-        pygame.display.flip()
+            screen.fill((190, 90, 90))
 
-        ms = clock.tick_busy_loop(60)
+            text("Game is currently paused, press space to unpause.", 50, 10, font="Arial", size=30)
 
-        if paused:
-            MAXTIME += (ms / 1000)
+            text("<- TBA", 470, 200)
+
+            # check if game is paused
+            if paused:
+                # check menu state
+                if menu_state == "main":
+                    # draw pause screen buttons
+                    if resume_button.draw(screen):
+                        paused = False
+                        run = False
+                    if load_button.draw(screen):
+                        print("load save button on pause screen pressed")
+                    if mainmenu_button.draw(screen):
+                        ATMAINMENU = True
+                        run = False
+                        paused = False
+                    if help_button.draw(screen):
+                        showHelpGUI()
+                    if quit_button.draw(screen):
+                        run = False
+                        pygame.quit()
+                        main_state = 'off'
+            else:
+                menu_state = 'not'
+
+            # event handler
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        paused = not paused
+                        run = not run
+                if event.type == pygame.QUIT:
+                    running = False
+                    run = False
+
+            pygame.display.flip()
+
+            ms = clock.tick_busy_loop(60)
+
+            if paused:
+                MAXTIME += (ms / 1000)
 
     # GAME OVER Screen
     while running and REMAININGTIME <= 0 and paused:
 
-        screen.fill((52, 78, 91, 127))
+        menu_state = "main"
 
-        text("GAME OVER, press space to try again.", 125, 10, font="Arial", size=30)
-        text("Final score: {}, Mazes Cleared: {}, Question Accuracy: {}% ({}/{})".format(
-            PLAYERSCORE, MAZESPASSED, ((100 * (QUESTIONSCORRECT / QUESTIONSSEEN)) if QUESTIONSSEEN > 0 else 0), QUESTIONSCORRECT, QUESTIONSSEEN), 75, 50, font="Arial", size=24)
+        retry_img = pygame.image.load("sprites/button_retry.png").convert_alpha()
+        savescore_img = pygame.image.load("sprites/button_savescore.png").convert_alpha()
+        viewscores_img = pygame.image.load("sprites/button_viewscores.png").convert_alpha()
+        load_img = pygame.image.load("sprites/button_load.png").convert_alpha()
+        mainmenu_img = pygame.image.load("sprites/button_mainmenu.png").convert_alpha()
+        quit_img = pygame.image.load("sprites/button_quit.png").convert_alpha()
 
-        text("(Perhaps add a Save (High) Score, Main Menu, and Quit Button here)", 75, 250, font="Arial", size=22)
+        # create button instances
+        retry_button = button.Button(304, 95, retry_img, 1)
+        savescore_button = button.Button(266, 195, savescore_img, 1)
+        viewscores_button = button.Button(406, 195, viewscores_img, 1)
+        load_button = button.Button(336, 295, load_img, 1)
+        mainmenu_button = button.Button(336, 395, mainmenu_img, 1)
+        quit_button = button.Button(336, 495, quit_img, 1)
 
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    clock = pygame.time.Clock()
-                    MAXTIME += DEFAULTMAXTIME
-                    PLAYERSCORE = 0
-                    MAZESPASSED = 0
-                    QUESTIONSCORRECT = 0
-                    QUESTIONSSEEN = 0
-                    CURRENTDIFFICULTY = DEFAULTDIFFICULTY
-                    playerX = initialPlayerX
-                    playerY = initialPlayerY
-                    changemaze()
-                    paused = False
-            if event.type == pygame.QUIT:
-                running = False
+        run = True
+        while run:
 
-        pygame.display.flip()
+            screen.fill((190, 90, 90))
 
-        ms = clock.tick_busy_loop(60)
+            text("GAME OVER, press space to try again.", 125, 10, font="Arial", size=30)
+            text("Final score: {:.0f}, Mazes Cleared: {}, Question Accuracy: {:.0f}% ({}/{})".format(
+                PLAYERSCORE, MAZESPASSED, ((100 * (QUESTIONSCORRECT / QUESTIONSSEEN)) if QUESTIONSSEEN > 0 else 0),
+                QUESTIONSCORRECT, QUESTIONSSEEN), 75, 50, font="Arial", size=24)
 
-        if paused:
-            MAXTIME += (ms / 1000)
+            text("TBA ->", 200, 230)
+            text("<- TBA", 540, 230)
+            text("<- TBA", 465, 330)
 
-    # This point and below in the game loop is the actual gameplay screen
+            def retry():
+                global clock, MAXTIME, PLAYERSCORE, MAZESPASSED, QUESTIONSCORRECT, QUESTIONSSEEN, CURRENTDIFFICULTY, playerX, playerY, paused, run
+                clock = pygame.time.Clock()
+                MAXTIME += DEFAULTMAXTIME
+                PLAYERSCORE = 0
+                MAZESPASSED = 0
+                QUESTIONSCORRECT = 0
+                QUESTIONSSEEN = 0
+                CURRENTDIFFICULTY = DEFAULTDIFFICULTY
+                playerX = initialPlayerX
+                playerY = initialPlayerY
+                changemaze()
+                paused = False
+                run = False
 
-    screen.fill((255, 155, 155))
+            if REMAININGTIME <= 0 and paused:
+                if menu_state == "main":
+                    if retry_button.draw(screen):
+                        retry()
+                    if savescore_button.draw(screen):
+                        print("save score button on game over screen pressed")
+                    if viewscores_button.draw(screen):
+                        print("view scores button on game over screen pressed")
+                    if load_button.draw(screen):
+                        print("load save button on game over screen pressed")
+                    if mainmenu_button.draw(screen):
+                        ATMAINMENU = True
+                        paused = False
+                        run = False
+                    if quit_button.draw(screen):
+                        run = False
+                        pygame.quit()
+                else:
+                    menu_state = "not"
+
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        retry()
+                if event.type == pygame.QUIT:
+                    running = False
+                    run = False
+
+            pygame.display.flip()
+
+            ms = clock.tick_busy_loop(60)
+
+            if paused:
+                MAXTIME += (ms / 1000)
+
+    # This point and below in the game loop is for the actual gameplay (not pause or main menu or game over screen)
+
+    screen.fill((190, 90, 90))
 
     setmaze()
 
+    QUESTIONSINCURRENTMAZE = round(2 * math.log(7/8 * CURRENTDIFFICULTY) + 1) # changed so difficulty is less linear
+
     if not questionsloaded:
-        for number in range(round(2 * math.log(7/8 * CURRENTDIFFICULTY) + 1)):  # Amount of questions = difficulty?, changed it to make it less linear to range(round(2 * math.log(7/8 * CURRENTDIFFICULTY) + 1))
-            # Makes new OO questions in valid locations
+        playerX_change = 0
+        playerY_change = 0
+        for number in range(QUESTIONSINCURRENTMAZE):
+            # Makes new question instances in valid locations
             x = random.randrange(155, 615, 24)
             y = random.randrange(105, 524, 24)
             q = Question(x, y, CURRENTDIFFICULTY)
@@ -294,19 +476,19 @@ while running:
                 changemaze()
                 PLAYERSCORE = 0
                 MAZESPASSED += 1
-                MAXTIME += 20
                 if QUESTIONSSEEN > 0:
                     PLAYERSCORE += 100 * CURRENTDIFFICULTY * (QUESTIONSCORRECT / QUESTIONSSEEN)
                 else:
                     PLAYERSCORE += 100
                 CURRENTDIFFICULTY += 2
+                MAXTIME += 5 * CURRENTDIFFICULTY + 20
+                DEBUGMODE = not DEBUGMODE
             if event.key == pygame.K_ESCAPE:  # Exits the game
                 running = False
             if event.key == pygame.K_F11:  # Toggles fullscreen for the game
                 pygame.display.toggle_fullscreen()
             if event.key == pygame.K_SPACE:  # Pauses and unpauses the instance
                 paused = not paused
-                #print("paused?: ", paused)
                 if paused:  # Locks user sprite movement
                     playerX_change = 0
                     playerY_change = 0
@@ -356,16 +538,17 @@ while running:
 
     ELAPSEDTIME = pygame.time.get_ticks()/1000
 
-    # Occurs when user sprite passes the finish line, places user sprite back at start, changes maze
-    if playerY >= 548:
-        #print("Done! {:.2f} seconds elapsed".format(ELAPSEDTIME))
+    # Occurs when user sprite passes the finish line; it places the user back at start, changes the maze, saves the game
+    if playerY >= 548 and (QUESTIONSINCURRENTMAZE == QUESTIONSSEENINCURRENTMAZE):
         playerX = initialPlayerX
         playerY = initialPlayerY
         MAZESPASSED += 1
-        MAXTIME += 20
-        PLAYERSCORE += 100 * CURRENTDIFFICULTY * (QUESTIONSCORRECT / QUESTIONSSEEN)
-        CURRENTDIFFICULTY += 2
+        PLAYERSCORE += (100 * CURRENTDIFFICULTY * (QUESTIONSCORRECT / QUESTIONSSEEN)) if QUESTIONSSEEN > 0 \
+            else (100 * CURRENTDIFFICULTY)
+        CURRENTDIFFICULTY += 1
+        MAXTIME += 5 * CURRENTDIFFICULTY + 20
         changemaze()
+        # TODO: automatically save game progress in a file, which the player can load from the main menu or pause screen
 
     # Update player position visually
     player(playerX, playerY)
@@ -394,8 +577,9 @@ while running:
 
     if DEBUGMODE:   # Displays the debug menu when TRUE
         text("Press D to hide: x: {}, y: {}, x mov: {}, y mov: {}, side moving: {}, wall at side?: {}".format(playerX, playerY, playerX_change, playerY_change, playerSideToCheck, wallAtPlayerSide(playerSideToCheck)), 20, 10)
-    if paused:      # Displays the pause menu when TRUE
-        text("-PAUSED-", 50, 500, "Impact", 24)
+    if paused:  # Displays the pause menu when TRUE
+        pass
+        # text("-PAUSED-", 50, 500, "Impact", 24)
 
     # Updates the entire display each frame
     pygame.display.flip()

@@ -11,9 +11,6 @@ from equationfunction import generateEquation
 
 pygame.init()
 
-# Debug Mode Default (False), enable by pressing 'd' in-game
-DEBUGMODE = False
-
 # Default start time and default question difficulty
 DEFAULTMAXTIME = 150
 DEFAULTDIFFICULTY = 2
@@ -160,10 +157,12 @@ def createQuestionWindow(question):
 
     root.mainloop()
 
+
 def sortHighScoresList(hslist):
 
     hslist.sort(key=lambda x: int(x[1]))
     return hslist
+
 
 def viewScores():
 
@@ -268,7 +267,6 @@ def wallAtPlayerSide(side):
                 if abs(playerY - qToTest.y) < 10 and abs(playerX - qToTest.x) < 10:  # if user is close to a question
                     showquestion(qToTest)  # show specific question the user is touching
                     QUESTIONSSEENINCURRENTMAZE += 1
-                    # qToTest.hidequestion()
         elif color == (255, 255, 255, 255) and color2 == (255, 255, 255, 255) and color3 == (
         255, 255, 255, 255) and color4 == (255, 255, 255, 255):
             return False
@@ -599,19 +597,6 @@ while running:
         if event.type == pygame.QUIT:  # Exits the game
             running = False
         if event.type == pygame.KEYDOWN:  # Activates debug mode
-            """if event.key == pygame.K_d:
-                DEBUGMODE = not DEBUGMODE
-            if event.key == pygame.K_m and DEBUGMODE:  # DEBUG BEHAVIOR: Change maze
-                changemaze()
-                PLAYERSCORE = 0
-                MAZESPASSED += 1
-                if QUESTIONSSEEN > 0:
-                    PLAYERSCORE += 100 * CURRENTDIFFICULTY * (QUESTIONSCORRECT / QUESTIONSSEEN)
-                else:
-                    PLAYERSCORE += 100
-                CURRENTDIFFICULTY += 2
-                MAXTIME += 5 * CURRENTDIFFICULTY + 30
-                DEBUGMODE = not DEBUGMODE"""
             if event.key == pygame.K_ESCAPE:  # Exits the game
                 running = False
             if event.key == pygame.K_F11:  # Toggles fullscreen for the game
@@ -667,7 +652,7 @@ while running:
 
     ELAPSEDTIME = pygame.time.get_ticks() / 1000
 
-    # Occurs when user sprite passes the finish line; it places the user back at start, changes the maze, saves the game
+    # When user passes the maze with all questions; it places the user back at start, changes the maze, saves the game
     if playerY >= 548 and (QUESTIONSSEENINCURRENTMAZE >= QUESTIONSINCURRENTMAZE):
         playerX = initialPlayerX
         playerY = initialPlayerY
@@ -704,9 +689,9 @@ while running:
     else:
         text("Overall Accuracy: {:.0f}%".format(100 * (QUESTIONSCORRECT / QUESTIONSSEEN)), 5, 575)
 
-    if DEBUGMODE:  # Displays the debug menu when TRUE
+    """if DEBUGMODE:  # Displays the debug menu when TRUE
         text("Press D to hide: x: {}, y: {}, x mov: {}, y mov: {}, side moving: {}, wall at side?: {}".format(playerX, playerY, playerX_change, playerY_change, playerSideToCheck,wallAtPlayerSide(playerSideToCheck)),20, 10)
-        text("q's in current maze: {}, q's seen in current maze: {}".format(QUESTIONSINCURRENTMAZE, QUESTIONSSEENINCURRENTMAZE), 20, 25)
+        text("q's in current maze: {}, q's seen in current maze: {}".format(QUESTIONSINCURRENTMAZE, QUESTIONSSEENINCURRENTMAZE), 20, 25)"""
 
     # Updates the entire display each frame
     pygame.display.flip()

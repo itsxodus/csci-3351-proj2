@@ -1,6 +1,5 @@
 import math
 import tkinter.messagebox
-
 import pygame
 import random
 import tkinter as tk
@@ -69,10 +68,12 @@ def maze(filepath, x=150, y=75, widthScale=1.5, heightScale=1.5):
 
 
 def setmaze():
+    # Sets the maze to the new 'currentmaze' choice
     maze(currentmaze, 150, 75, 1.5, 1.5)
 
 
 def changemaze():
+    # changes the 'currentmaze' choice, clears out loaded questions
     global currentmaze, questionsloaded, QUESTIONSSEENINCURRENTMAZE
     questionlist.clear()
     currentmaze = mazelist[random.randint(0, len(mazelist) - 1)]
@@ -91,6 +92,7 @@ def questionicon(question):
 
 
 def showHelpGUI():
+    # shows the tkinter help GUI
     root = tk.Tk()
     root.resizable(0, 0)
     root.geometry('350x350')
@@ -119,6 +121,7 @@ def showHelpGUI():
 
 
 def showquestion(question):
+    # creates the question window, updates global variables
     global CURRENTQUESTION, QUESTIONSSEEN, QUESTIONSSEENINCURRENTMAZE
 
     createQuestionWindow(question)
@@ -127,6 +130,7 @@ def showquestion(question):
 
 
 def createQuestionWindow(question):
+    # creates the tkinter question window, handles user input of the answer
     root = tk.Tk()
     root.resizable(0, 0)
     root.geometry('350x150')
@@ -137,6 +141,7 @@ def createQuestionWindow(question):
     inputbox.pack()
 
     def submitAnswer():
+        # handles the submission of the user's input, checks if the user's answer is correct for the question
         global MAXTIME, QUESTIONSCORRECT, PLAYERSCORE
 
         useranswer = inputbox.get(1.0, "end-1c")
@@ -159,13 +164,13 @@ def createQuestionWindow(question):
 
 
 def sortHighScoresList(hslist):
-
+    # sorts the high scores list properly
     hslist.sort(key=lambda x: int(x[1]))
     return hslist
 
 
 def viewScores():
-
+    # creates the tkinter high scores list by formatting data present in highscores.txt
     highscoresList = []
 
     root = tk.Tk()
@@ -197,8 +202,9 @@ def viewScores():
 
 
 def saveScore():
+    # creates the save score tkinter window for name entry
     def addEntry():
-
+        # saves the user's current score, name, etc. post-game over into highscores.txt
         nameinput = inputbox.get(1.0, "end-1c")
         print(nameinput)
 
@@ -222,6 +228,7 @@ def saveScore():
 
 
 def saveGame():
+    # saves the user's current score, mazes passed, difficulty, post-game over into save.txt
     with open("save.txt", "w") as fhand:
         fhand.write("{:.0f},{},{},{},{},{}".format(PLAYERSCORE, MAZESPASSED, QUESTIONSSEEN, QUESTIONSCORRECT, CURRENTDIFFICULTY, REMAININGTIME))
 
@@ -326,6 +333,7 @@ while running:
                     MAXTIME = DEFAULTMAXTIME + pygame.time.get_ticks() / 1000
                     MAXTIME = float(parameters[5])
                     MAXTIME += pygame.time.get_ticks() / 1000
+                    MAXTIME += 5 * int(parameters[4]) + 30
                     QUESTIONSINCURRENTMAZE = 0
                     playerX = initialPlayerX
                     playerY = initialPlayerY
@@ -347,7 +355,7 @@ while running:
                     parameters = line.split(",")
                 try:
                     if len(parameters) == 6:
-                        text("<- Score: {}, On Maze {}, Difficulty Level {}, Time Left: {:.0f} sec".format(parameters[0], int(parameters[1])+1, parameters[4], float(parameters[5])), 150, 225, font="Arial", size=14)
+                        text("<- Score: {}, On Maze {}, Difficulty Level {}, Time Left: {:.0f} sec".format(parameters[0], int(parameters[1])+1, parameters[4], (float(parameters[5])+(5 * int(parameters[4]) + 30))), 150, 225, font="Arial", size=14)
                 except:
                     pass
 
@@ -430,7 +438,7 @@ while running:
                 for line in fhand.readlines():
                     parameters = line.split(",")
             try:
-                text("<- Score: {}, Maze {}, Difficulty {}, {:.0f} sec left".format(parameters[0], int(parameters[1])+1, parameters[4], float(parameters[5])), 465, 200, font="Arial", size=14)
+                text("<- Score: {}, Maze {}, Difficulty {}, {:.0f} sec left".format(parameters[0], int(parameters[1])+1, parameters[4], (float(parameters[5])+(5 * int(parameters[4]) + 30))), 465, 200, font="Arial", size=14)
             except:
                 pass
 
@@ -512,7 +520,7 @@ while running:
                 for line in fhand.readlines():
                     parameters = line.split(",")
             try:
-                text("<- Score: {}, Maze {}, Difficulty {}, {:.0f} sec left".format(parameters[0], int(parameters[1])+1, parameters[4], float(parameters[5])), 465, 330, font="Arial", size=14)
+                text("<- Score: {}, Maze {}, Difficulty {}, {:.0f} sec left".format(parameters[0], int(parameters[1])+1, parameters[4], (float(parameters[5])+(5 * int(parameters[4]) + 30))), 465, 330, font="Arial", size=14)
             except:
                 pass
 
